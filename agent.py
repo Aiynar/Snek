@@ -41,17 +41,25 @@ class Graph:
         (x, y) = id
         results = []
         if first and direction==Direction.NORTH:
+            #print("Neighbor direction North")
             results = [(x+1, y),(x, y-1),(x-1, y)]
-        elif direction==Direction.EAST:
+        elif first and direction==Direction.EAST:
+            #print("Neighbor direction East")
             results = [(x+1,y),(x,y-1), (x,y+1)]
-        elif direction==Direction.SOUTH:
+        elif first and direction==Direction.SOUTH:
+            #print("Neighbor direction South")
             results = [(x+1, y),(x-1, y),(x, y+1)]
-        elif direction==Direction.WEST:
+        elif first and direction==Direction.WEST:
+            #print("Neighbor direction West")
             results = [(x, y-1),(x-1, y),(x, y+1)]
+        else:
+            #print("Neighbor direction None")
+            results = [(x+1,y),(x-1,y),(x,y+1),(x,y-1)]
         if (x + y) % 2 == 0: results.reverse() # aesthetics
         results = filter(self.in_bounds, results)
         results = filter(self.passable, results)
-        return results 
+        return results
+
     def cost(self, id, id2):
         (x1, y1) = id
         (x2, y2) = id2
@@ -60,7 +68,7 @@ class Graph:
 class PriorityQueue:
     def __init__(self):
         self.elements = []
-    
+   
     def empty(self):
         return len(self.elements) == 0
     
@@ -76,7 +84,6 @@ def reconstruct_path(came_from, start, goal):
     while current != start:
         path.append(current)
         current = came_from[current]
-    path.append(start) # optional
     path.reverse() # optional
     return path
 
@@ -96,20 +103,25 @@ def a_star_search(graph, start, goal, direction):
     came_from[start] = None
     cost_so_far[start] = 0
     first = True
+    #print("New Search: " + str(start) + ", " + str(goal))
     while not frontier.empty():
         current = frontier.get()
-        
+        #print()
+        #print("Evaluating "+str(current)+".")
+        #print("Neighbors: "+str(graph.neighbors(current, first, direction)))
         if current in goal:
             break
         for next in graph.neighbors(current, first, direction):
             first = False
+            #print("Neighbor: "+str(next)+", H: "+str(heuristic(goal, next)))
             new_cost = cost_so_far[current] + graph.cost(current, next)
             if next not in cost_so_far or new_cost < cost_so_far[next]:
+                #print(str(next)+" Chosen")
                 cost_so_far[next] = new_cost
                 priority = new_cost + heuristic(goal, next)
                 frontier.put(next, priority)
-                came_from[next] = current
-    
+                came_from[next] = current 
+    #print("goal? "+ str(current))
     return came_from, cost_so_far, current
 
 class Agent:
@@ -123,9 +135,9 @@ class Agent:
             (x1, y1) = self.path.pop(0)
             self.body.append((x1, y1))
             (x2, y2) = head
-            print("Head: "+str(head))
+            #print("Head: "+str(head))
             mutation = (x1-x2, y1-y2)
-            print("Muta: "+str(mutation))
+            #print("Muta: "+str(mutation))
             if mutation==(1,0):
                newdirection = 1
             elif mutation==(0,1):
@@ -154,18 +166,16 @@ class Agent:
             self.head = self.graph.findHead()  #...
             self.food = self.graph.findFood()  #...
             if self.path == []:
-
                 #replace them here
                 came_from, cost_so_far, goal = a_star_search(self.graph, self.head, self.food, direction)
                 self.path = reconstruct_path(came_from, self.head, goal)
-                self.path.pop(0)
-                print("Head: "+str(self.head))
-                print("Path: "+str(self.path))
+                #print("Head: "+str(self.head))
+                #print("Path: "+str(self.path))
                 nextmove = self.findDirection(self.head, direction, self.path)
+                #print("Step!")
             else:
                 self.head = self.graph.findHead()
-                nextmove = self.findDirection(self.head, direction, self.path)
-             
+                nextmove = self.findDirection(self.head, direction, self.path)             
             if nextmove==-1:
                 return Move.LEFT
             elif nextmove==0:
