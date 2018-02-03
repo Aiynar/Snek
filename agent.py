@@ -3,7 +3,7 @@ from move import Direction
 from move import Move
 from board import *
 import heapq
-
+import math
 class Graph:
     def __init__(self, board):
         self.board = board
@@ -85,6 +85,7 @@ def reconstruct_path(came_from, start, goal):
         path.append(current)
         current = came_from[current]
     path.reverse() # optional
+    print(str(len(path))+",")
     return path
 
 def heuristic(goals, b):
@@ -92,7 +93,7 @@ def heuristic(goals, b):
     heuristics = []
     for goal in goals:
         (x1, y1) = goal
-        heuristics.append(abs(x1 - x2) + abs(y1 - y2))
+        heuristics.append(math.sqrt(abs(x1 - x2)^2 + abs(y1 - y2)^2))
     return min(heuristics)
 
 def a_star_search(graph, start, goal, direction):
@@ -103,13 +104,16 @@ def a_star_search(graph, start, goal, direction):
     came_from[start] = None
     cost_so_far[start] = 0
     first = True
+    counter = 0
     #print("New Search: " + str(start) + ", " + str(goal))
     while not frontier.empty():
         current = frontier.get()
+        counter += 1
         #print()
         #print("Evaluating "+str(current)+".")
         #print("Neighbors: "+str(graph.neighbors(current, first, direction)))
         if current in goal:
+            print(str(counter)+",")
             break
         for next in graph.neighbors(current, first, direction):
             first = False
@@ -138,6 +142,7 @@ class Agent:
             #print("Head: "+str(head))
             mutation = (x1-x2, y1-y2)
             #print("Muta: "+str(mutation))
+            newdirection = 0
             if mutation==(1,0):
                newdirection = 1
             elif mutation==(0,1):
@@ -162,27 +167,24 @@ class Agent:
             return move
 
         def get_move(self, board, score, turns_alive, turns_to_starve, direction):
-            self.graph = Graph(board)          #move these three lines
-            self.head = self.graph.findHead()  #...
-            self.food = self.graph.findFood()  #...
-            if self.path == []:
-                #replace them here
+            self.graph = Graph(board)          
+            self.head = self.graph.findHead()              
+            if self.path==[]:
+                self.food = self.graph.findFood()
                 came_from, cost_so_far, goal = a_star_search(self.graph, self.head, self.food, direction)
                 self.path = reconstruct_path(came_from, self.head, goal)
-                #print("Head: "+str(self.head))
-                #print("Path: "+str(self.path))
-                nextmove = self.findDirection(self.head, direction, self.path)
-                #print("Step!")
-            else:
-                self.head = self.graph.findHead()
-                nextmove = self.findDirection(self.head, direction, self.path)             
+            #print("Head: "+str(self.head))
+            #print("Path: "+str(self.path))
+            #print("PATH: "+str(self.path))             
+            nextmove = self.findDirection(self.head, direction, self.path)
+            #print("Step!")
             if nextmove==-1:
                 return Move.LEFT
             elif nextmove==0:
                 return Move.STRAIGHT
             elif nextmove==1:
                 return Move.RIGHT
-            return null
+            return Move.STRAIGHT
 
         def on_die(self):
             self.path = []
